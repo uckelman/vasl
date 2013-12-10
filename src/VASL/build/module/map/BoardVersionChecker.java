@@ -123,7 +123,7 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
       overlayVersions = p;
     }
       // add the configuration option for automatic board updates
-      final BooleanConfigurer configurer = new BooleanConfigurer(AUTO_SYNCH_BOARDS, "Automatic board updates?", Boolean.TRUE);
+      final BooleanConfigurer configurer = new BooleanConfigurer(AUTO_SYNCH_BOARDS, "Automatic board updates (restart required)?", Boolean.FALSE);
       GameModule.getGameModule().getPrefs().addOption(Resources.getString("Prefs.general_tab"), configurer);
       autoSynchBoards = Boolean.TRUE.equals(GameModule.getGameModule().getPrefs().getValue(AUTO_SYNCH_BOARDS));
 
