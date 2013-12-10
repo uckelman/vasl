@@ -18,19 +18,6 @@
  */
 package VASL.build.module.map;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.Vector;
-
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import VASL.build.module.map.boardPicker.ASLBoard;
 import VASL.build.module.map.boardPicker.Overlay;
 import VASSAL.build.AbstractBuildable;
@@ -41,9 +28,28 @@ import VASSAL.build.module.Map;
 import VASSAL.build.module.ServerConnection;
 import VASSAL.build.module.map.boardPicker.Board;
 import VASSAL.command.Command;
+import VASSAL.configure.BooleanConfigurer;
 import VASSAL.configure.StringConfigurer;
+import VASSAL.i18n.Resources;
 import VASSAL.tools.PropertiesEncoder;
 import VASSAL.tools.io.IOUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Copyright (c) 2003 by Rodney Kinney.  All rights reserved.
@@ -53,6 +59,7 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
   private String boardVersionURL;
   private String overlayVersionURL;
   private String boardPageURL;
+  private boolean autoSynchBoards;
   private Map map;
   private Properties boardVersions;
   private Properties overlayVersions;
@@ -61,9 +68,13 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
   private static final String BOARD_PAGE_URL = "boardPageURL";
   private static final String BOARD_VERSIONS = "boardVersions";
   private static final String OVERLAY_VERSIONS = "overlayVersions";
+  private static final String AUTO_SYNCH_BOARDS = "autoSynchBoards";
+
+    // our board repository
+    private final static String REMOTE_URL = "https://github.com/vasl-developers/vasl-boards.git";
 
   public String[] getAttributeNames() {
-    return new String[]{BOARD_VERSION_URL, OVERLAY_VERSION_URL, BOARD_PAGE_URL};
+    return new String[]{BOARD_VERSION_URL, OVERLAY_VERSION_URL, BOARD_PAGE_URL, AUTO_SYNCH_BOARDS};
   }
 
   public String getAttributeValueString(String key) {
@@ -75,6 +86,9 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
     }
     else if (BOARD_PAGE_URL.equals(key)) {
         return boardPageURL;
+    }
+      else if (AUTO_SYNCH_BOARDS.equals(key)){
+        return AUTO_SYNCH_BOARDS;
     }
     return null;
   }
@@ -88,6 +102,9 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
     }
     else if (BOARD_PAGE_URL.equals(key)) {
     	boardPageURL = (String) value;
+    }
+      else if(AUTO_SYNCH_BOARDS.equals(key)){
+        autoSynchBoards = Boolean.TRUE.equals(value);
     }
   }
 
@@ -105,9 +122,134 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
     if (p != null) {
       overlayVersions = p;
     }
+      // add the configuration option for automatic board updates
+      final BooleanConfigurer configurer = new BooleanConfigurer(AUTO_SYNCH_BOARDS, "Automatic board updates?", Boolean.TRUE);
+      GameModule.getGameModule().getPrefs().addOption(Resources.getString("Prefs.general_tab"), configurer);
+      autoSynchBoards = Boolean.TRUE.equals(GameModule.getGameModule().getPrefs().getValue(AUTO_SYNCH_BOARDS));
+
+      if(autoSynchBoards) {
+
+          final File boardFolder = (File) GameModule.getGameModule().getPrefs().getValue("boardURL");
+          final String boardFolderPath = "C:\\Users\\usulld2\\AppData\\Local\\Temp\\myRepro";
+
+          // Thread to update the boards as a background task
+          org.jdesktop.swingworker.SwingWorker<String, Void> boardUpdateThread = new org.jdesktop.swingworker.SwingWorker<String,Void>() {
+
+              @Override
+              protected String doInBackground() throws Exception {
+
+                  // initialize the repository if necessary
+                  // initRepository(boardFolder.getPath());
+                  boolean repositoryOK = initRepository(boardFolderPath);
+
+                  // return updateBoards(boardFolder.getPath());
+                  if (repositoryOK){
+                      return updateBoards(boardFolderPath);
+                  }
+                  return "";
+              }
+              protected void done() {
+                  String error = null;
+                  try {
+                      error = get();
+                  }
+                  catch (InterruptedException e) {
+                  }
+                  catch (ExecutionException e) {
+                  }
+                  finally {
+                      // just log a warning if something went wrong
+                      if (error != null && !error.equals("")) {
+                          GameModule.getGameModule().warn("There was an error updating the boards: " + error);
+                      }
+                  }
+              }
+          };
+
+          // update the boards
+          boardUpdateThread.execute();
+      }
   }
 
-  public Command getRestoreCommand() {
+    /**
+     * Copies board updates from the VASL board archive to the boards directory set in the preferences
+     * @return an error message or an empty string if no error
+     */
+    private String updateBoards(String boardFolder) {
+
+        if (boardFolder == null || boardFolder.equals("")) {
+
+            GameModule.getGameModule().warn("Cannot update boards. Invalid board folder:  " + boardFolder);
+            return "";
+        }
+
+        // Open the local repository and pull any new/updated boards
+        File localRepro = new File(boardFolder + File.separator + ".git");
+        GameModule.getGameModule().warn("Updating boards...");
+        Repository repository = null;
+        try {
+            FileRepositoryBuilder builder = new FileRepositoryBuilder();
+            repository = builder.setGitDir(localRepro)
+                    .readEnvironment() // scan environment GIT_* variables
+                    .findGitDir() // scan up the file system tree
+                    .build();
+            Git git = new Git(repository);
+            git.pull().call();
+
+        } catch (Exception e) {
+
+            GameModule.getGameModule().warn("Unable to update the boards from " + REMOTE_URL);
+            GameModule.getGameModule().warn(e.toString());
+        }
+        finally {
+            repository.close();
+        }
+        GameModule.getGameModule().warn("Board update complete");
+        return "";
+    }
+
+    /**
+     * Initialize the boards folder. It must be empty; if not show a message
+     * @param boardFolder the boards folder
+     * @return true if there were no errors
+     */
+    private  boolean initRepository (String boardFolder) {
+
+        if (boardFolder == null || boardFolder.equals("")) {
+
+            GameModule.getGameModule().warn("Cannot update boards. Invalid board folder:  " + boardFolder);
+        }
+        // see if the local repository exists in the boards directory, if not clone it
+        File localRepro = null;
+        try {
+            localRepro = new File(boardFolder + File.separator + ".git");
+            if (!localRepro.exists() || !localRepro.isDirectory()) {
+
+                // if the boards directory is not empty give up
+                File boardsDirectory = new File(boardFolder);
+                if(boardsDirectory.list().length > 0) {
+                    GameModule.getGameModule().warn("The boards directory must initially be empty to use automatic board updates.");
+                    GameModule.getGameModule().warn("Please move your old boards to a different location or pick a new boards directory.");
+                    return false;
+                }
+                // then clone
+                GameModule.getGameModule().warn("Initializing board synchronization in " + boardFolder);
+                GameModule.getGameModule().warn("Please wait for the synchronization to complete before using VASL (it will take a few minutes)");
+                Git.cloneRepository()
+                        .setURI(REMOTE_URL)
+                        .setDirectory(new File(boardFolder))
+                        .call();
+            }
+        } catch (GitAPIException e) {
+
+            GameModule.getGameModule().warn("Unable to clone the boards repository: " + REMOTE_URL);
+            GameModule.getGameModule().warn(e.toString());
+            return false;
+        }
+        return true;
+    }
+
+    public Command getRestoreCommand() {
     return null;
   }
 
@@ -123,7 +265,7 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
 			GameModule.getGameModule().warn(info);
 		}
 
-      if (boardVersions != null) {
+      if (boardVersions != null && !autoSynchBoards) {
         Vector obsolete = new Vector();
         for (Board board : map.getBoards()) {
           ASLBoard b = (ASLBoard) board;
@@ -160,7 +302,7 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
           SwingUtilities.invokeLater(runnable);
         }
       }
-      if (overlayVersions != null) {
+      if (overlayVersions != null && !autoSynchBoards) {
         Vector obsolete = new Vector();
         for (Board board : map.getBoards()) {
           ASLBoard b = (ASLBoard) board;
@@ -221,7 +363,8 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    if (Boolean.TRUE.equals(evt.getNewValue())) {
+
+    if (Boolean.TRUE.equals(evt.getNewValue()) && !autoSynchBoards) {
       try {
         URL base = new URL(boardVersionURL);
         URLConnection conn = base.openConnection();
