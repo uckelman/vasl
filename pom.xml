@@ -27,6 +27,16 @@
             <artifactId>jdom2</artifactId>
             <version>2.0.5</version>
         </dependency>
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>3.1.0.201310021548-r</version>
+		</dependency>
+        <dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jsch</artifactId>
+			<version>0.1.50</version>
+		</dependency>
     </dependencies>
 
 
@@ -131,6 +141,8 @@
                                     <!-- Add more jar to include here, but they need to be a
                                         dependency as well. -->
                                     <include>org.jdom:jdom2</include>
+                                    <include>org.eclipse.jgit:org.eclipse.jgit</include>
+                                    <include>com.jcraft:jsch</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
