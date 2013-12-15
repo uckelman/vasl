@@ -130,7 +130,6 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
       if(autoSynchBoards) {
 
           final File boardFolder = (File) GameModule.getGameModule().getPrefs().getValue("boardURL");
-          final String boardFolderPath = "C:\\Users\\usulld2\\AppData\\Local\\Temp\\myRepro";
 
           // Thread to update the boards as a background task
           org.jdesktop.swingworker.SwingWorker<String, Void> boardUpdateThread = new org.jdesktop.swingworker.SwingWorker<String,Void>() {
@@ -139,12 +138,10 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
               protected String doInBackground() throws Exception {
 
                   // initialize the repository if necessary
-                  // initRepository(boardFolder.getPath());
-                  boolean repositoryOK = initRepository(boardFolderPath);
+                  boolean repositoryOK = initRepository(boardFolder.getPath());
 
-                  // return updateBoards(boardFolder.getPath());
                   if (repositoryOK){
-                      return updateBoards(boardFolderPath);
+                      return updateBoards(boardFolder.getPath());
                   }
                   return "";
               }
@@ -196,15 +193,17 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
             Git git = new Git(repository);
             git.pull().call();
 
+            GameModule.getGameModule().warn("Board update complete");
+
         } catch (Exception e) {
 
             GameModule.getGameModule().warn("Unable to update the boards from " + REMOTE_URL);
-            GameModule.getGameModule().warn(e.toString());
+            GameModule.getGameModule().warn("Board synchronization is corrupt. Please empty your boards folder and restart.");
+
         }
         finally {
             repository.close();
         }
-        GameModule.getGameModule().warn("Board update complete");
         return "";
     }
 
@@ -234,7 +233,7 @@ public class BoardVersionChecker extends AbstractBuildable implements GameCompon
                 }
                 // then clone
                 GameModule.getGameModule().warn("Initializing board synchronization in " + boardFolder);
-                GameModule.getGameModule().warn("Please wait for the synchronization to complete before using VASL (it will take a few minutes)");
+                GameModule.getGameModule().warn("Please wait for the synchronization to complete before using VASL (it will take a few minutes, after which you'll see a message that it's complete)");
                 Git.cloneRepository()
                         .setURI(REMOTE_URL)
                         .setDirectory(new File(boardFolder))
