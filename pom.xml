@@ -14,7 +14,7 @@
     </properties>
 
     <dependencies>
-        <!-- We do not have any tests yet, but time will tell... -->
+        <!-- For tests we use JUnit  -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -42,6 +42,12 @@
 
     <build>
         <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>test/java</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>test/resources</directory>
+            </testResource>
+        </testResources>
         <resources>
             <resource>
                 <directory>dist</directory>
@@ -49,6 +55,7 @@
                 <includes>
                     <include>buildFile</include>
                     <include>moduledata</include>
+                    <include>version.properties</include>
                 </includes>
             </resource>
             <resource>

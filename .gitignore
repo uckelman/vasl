@@ -4,3 +4,5 @@
 /classes*
 /target
 /tmp*
+*.iml
+/.idea
