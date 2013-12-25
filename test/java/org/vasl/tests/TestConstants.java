@@ -16,9 +16,8 @@ public class TestConstants {
     private static final Logger logger = LoggerFactory.getLogger(TestConstants.class);
 
     @Test
-    public void testVaslVersionLoading() {
-        logger.info("VASL Version: " + Constants.VASL_VERSION);
-        assertNotNull(Constants.VASL_VERSION);
-        assertFalse(Constants.VASL_VERSION.startsWith("{"));
+    public void testBoardDirNotNull() {
+        logger.info("Board directory property name: " + Constants.BOARD_DIR);
+        assertNotNull(Constants.BOARD_DIR);
     }
 }

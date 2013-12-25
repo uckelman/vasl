@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VASSAL.launch.BasicModule VassalVersion="3.2.8" description="Virtual Advanced Squad Leader" name="VASL" nextPieceSlotId="6666" version="${project.version}">
+    <VASL.Constants/>
     <VASL.build.module.OBA hotkey="117,0"/>
     <VASL.build.module.ScenInfo/>
     <VASSAL.build.module.GlobalOptions autoReport="Use Preferences Setting" centerOnMove="Use Preferences Setting" nonOwnerUnmaskable="Use Preferences Setting" playerIdFormat="$playerName$" promptString="Let opponent unconceal my units" specifyExtensionDirInPrefs="true">
@@ -168,7 +169,7 @@
         <VASSAL.build.module.documentation.HelpFile fileName="Credits.txt" fileType="archive" title="Credits"/>
     </VASSAL.build.module.Documentation>
     <VASSAL.build.module.Inventory centerOnPiece="true" drawPieces="true" foldersOnly="false" forwardKeystroke="true" groupBy="CurrentBoard,LocationName" hotkey="" icon="malf" include="InvisibleToOthers != true &amp;&amp; BRK_Active = true || PieceName = DM || PieceName = Disrupt" leafFormat="$PieceName$" name="Broken" nonLeafFormat="$PropertyValue$" pieceZoom="0.75" showMenu="true" sides="" sortFormat="$PieceName$" sortPieces="true" sorting="alpha" text="" tooltip="Show inventory of broken units"/>
-    <VASL.build.module.ASLCommandEncoder noColorPreferences=""/>
+    <VASL.build.module.ASLCommandEncoder />
     <VASSAL.build.module.PieceWindow hidden="false" hotkey="67,520" icon="counters" name="VASL Counters" text="" tooltip="Show/Hide the VASL Counters window">
         <VASSAL.build.widget.TabWidget>
             <VASSAL.build.widget.TabWidget entryName="Unit">

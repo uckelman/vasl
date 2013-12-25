@@ -72,6 +72,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
 
+import VASL.Constants;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import org.slf4j.Logger;
@@ -112,7 +113,7 @@ public class ASLBoardPicker extends BoardPicker implements ActionListener {
     LoggerFactory.getLogger(ASLBoardPicker.class);
 
   /** The key for the preferences setting giving the board directory */
-  public static final String BOARD_DIR = "boardURL";
+
   private File boardDir;
   protected TerrainEditor terrain;
   private SetupControls setupControls;
@@ -182,12 +183,12 @@ public class ASLBoardPicker extends BoardPicker implements ActionListener {
   }
 
   public void addTo(Buildable b) {
-    DirectoryConfigurer config = new VASSAL.configure.DirectoryConfigurer(BOARD_DIR, "Board Directory");
+    DirectoryConfigurer config = new VASSAL.configure.DirectoryConfigurer(Constants.BOARD_DIR, "Board Directory");
 
     final GameModule g = GameModule.getGameModule();
 
     g.getPrefs().addOption(config);
-    String storedValue = g.getPrefs().getStoredValue(BOARD_DIR);
+    String storedValue = g.getPrefs().getStoredValue(Constants.BOARD_DIR);
     if (storedValue == null || !new File(storedValue).exists()) {
       File archive = new File(g.getDataArchive().getName());
       File dir = archive.getParentFile();
@@ -197,8 +198,8 @@ public class ASLBoardPicker extends BoardPicker implements ActionListener {
       }
       config.setValue(defaultDir);
     }
-    setBoardDir((File) g.getPrefs().getValue(BOARD_DIR));
-    g.getPrefs().getOption(BOARD_DIR).addPropertyChangeListener(new PropertyChangeListener() {
+    setBoardDir((File) g.getPrefs().getValue(Constants.BOARD_DIR));
+    g.getPrefs().getOption(Constants.BOARD_DIR).addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         setBoardDir((File) evt.getNewValue());
       }
@@ -621,7 +622,7 @@ public class ASLBoardPicker extends BoardPicker implements ActionListener {
 
     public SetupControls() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      final DirectoryConfigurer pref = (DirectoryConfigurer) GameModule.getGameModule().getPrefs().getOption(BOARD_DIR);
+      final DirectoryConfigurer pref = (DirectoryConfigurer) GameModule.getGameModule().getPrefs().getOption(Constants.BOARD_DIR);
       dirConfig = new DirectoryConfigurer(null, pref.getName());
       dirConfig.setValue(pref.getFileValue());
       add(dirConfig.getControls());

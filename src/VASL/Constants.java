@@ -1,34 +1,45 @@
 package VASL;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import VASSAL.build.Buildable;
+import VASSAL.build.Builder;
+import VASSAL.build.GameModule;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import java.util.List;
 
 /**
  * Container for storing magical literal values that are valid across the entire module.
  */
-public class Constants {
+public class Constants implements Buildable {
 
-    public static final String VASL_VERSION_NAME = "vasl.version";
+    public static final String BOARD_DIR = "boardURL";
 
-    public static final String VASL_VERSION;
+    public String getVersion() {
+        return GameModule.getGameModule().getGameVersion();
+    }
 
-    static {
-        InputStream stream = Constants.class.getClassLoader().getResourceAsStream("version.properties");
-        if (stream == null) {
-            throw new RuntimeException("Could not read version.properties from context root.");
-        }
-        Properties properties = new Properties();
-        try {
-            properties.load(stream);
-        } catch (IOException e) {
-            throw new RuntimeException("Exception loading version.properties, wrong format? (" + e.getMessage() + ")");
-        }
+    public void build(Element e) {
+        Builder.build(e, this);
+    }
 
-        VASL_VERSION = properties.getProperty(VASL_VERSION_NAME);
+    public void addTo(Buildable parent) {
+        // we do nothing as we've been already added by GameModule
+    }
 
-        if (VASL_VERSION == null || VASL_VERSION.length() == 0) {
-            throw new RuntimeException("Invalid VASL version in version.properties");
-        }
+    public void add(Buildable child) {
+        // we do nothing as this class does not accept children.
+    }
+
+    public Element getBuildElement(Document doc) {
+        return doc.createElement(getClass().getName());
+    }
+
+    /**
+     * Returns the singleton instances configured in the buildFile.
+     * @return the singleton instances configured in the buildFile.
+     */
+    public static Constants getConstants() {
+        return GameModule.getGameModule().getComponentsOf(Constants.class).get(0);
     }
 }

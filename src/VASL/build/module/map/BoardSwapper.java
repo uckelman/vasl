@@ -18,6 +18,7 @@
  */
 package VASL.build.module.map;
 
+import VASL.Constants;
 import VASL.build.module.ASLMap;
 import java.awt.Component;
 import java.awt.Point;
@@ -175,7 +176,7 @@ public class BoardSwapper extends AbstractBuildable {
     public Picker(Map m) {
       this.map = m;
       allowMultiple = true;
-      setBoardDir((File) GameModule.getGameModule().getPrefs().getValue(BOARD_DIR));
+      setBoardDir((File) GameModule.getGameModule().getPrefs().getValue(Constants.BOARD_DIR));
     }
 
     public void finish() {
