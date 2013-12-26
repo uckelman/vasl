@@ -80,11 +80,6 @@ public class BoardSynchronizer implements Buildable, GameComponent {
      * @param boardFolder A file directory that exists.
      */
     public void synchronize(File boardFolder, Logger logger, GameModule module) throws Exception {
-        // we need to set the Locale to ROOT lest JGit will fail horribly if his royal properties are
-        // not translated to Swahili or whatever.
-        Locale defaultLocale = Locale.getDefault();
-        Locale.setDefault(Locale.ENGLISH);
-        NLS.setLocale(Locale.ENGLISH);
         try {
             Git git = Git.open(boardFolder);
             FetchCommand fetch = git.fetch();
@@ -115,8 +110,6 @@ public class BoardSynchronizer implements Buildable, GameComponent {
             throw new RuntimeException("Transport problem: " + e.getMessage());
         } catch (GitAPIException e) {
             throw new RuntimeException("Git problem: " + e.getMessage());
-        } finally {
-            Locale.setDefault(defaultLocale);
         }
     }
 
